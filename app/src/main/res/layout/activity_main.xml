@@ -6,59 +6,18 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/btn_device1_connect"
-        android:layout_width="127dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="80dp"
+
+    <TextView
+        android:id="@+id/tv_connection_prompt"
+        android:layout_width="149dp"
+        android:layout_height="22dp"
+        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:background="@android:color/holo_green_dark"
-        android:text="Connect"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btn_device2_connect"
-        app:layout_constraintHorizontal_bias="0.909"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/btn_device2_connect"
-        android:layout_width="121dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="80dp"
-        android:layout_marginEnd="52dp"
-        android:background="@android:color/holo_green_dark"
-        android:text="Connect"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/tv_charge_device1"
-        android:layout_width="72dp"
-        android:layout_height="45dp"
-        android:layout_marginBottom="168dp"
-        android:layout_marginStart="104dp"
         android:layout_marginTop="8dp"
-        android:text="TextView"
-        android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/btn_device1_connect"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.803" />
-
-    <TextView
-        android:id="@+id/tv_charge_device2"
-        android:layout_width="wrap_content"
-        android:layout_height="46dp"
-        android:layout_marginBottom="172dp"
-        android:layout_marginEnd="80dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="TextView"
-        android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/btn_device2_connect"
+        android:text="Connect devices"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tv_charge_device1"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.82" />
-
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </android.support.constraint.ConstraintLayout>

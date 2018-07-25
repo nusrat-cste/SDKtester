@@ -1,7 +1,9 @@
 package com.example.nusra.insoledevice;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,25 +34,28 @@ import hk.advanpro.android.sdk.device.callback.DeviceCommandCallback;
 import hk.advanpro.android.sdk.device.callback.DeviceConnectCallback;
 import hk.advanpro.android.sdk.device.callback.DeviceEventCallback;
 import hk.advanpro.android.sdk.device.callback.DeviceManagerScanCallback;
+import hk.advanpro.android.sdk.device.callback.MainThreadDeviceCommandCallback;
+import hk.advanpro.android.sdk.device.callback.MainThreadDeviceEventCallback;
 import hk.advanpro.android.sdk.device.enumeration.ConnectType;
 import hk.advanpro.android.sdk.device.enumeration.DeviceType;
 import hk.advanpro.android.sdk.device.params.ble.insole.BLEInsoleHistoryStepCommandParams;
+import hk.advanpro.android.sdk.device.params.ble.insole.BLEInsoleSyncTimeCommandParams;
 import hk.advanpro.android.sdk.device.result.DeviceConnectResult;
 import hk.advanpro.android.sdk.device.result.DeviceEventResult;
 import hk.advanpro.android.sdk.device.result.ble.BLEDeviceScanResult;
 import hk.advanpro.android.sdk.device.result.ble.insole.BLEInsoleHistoryStepCommandResult;
+import hk.advanpro.android.sdk.device.result.ble.insole.BLEInsoleRealStepEventResult;
+import hk.advanpro.android.sdk.device.result.ble.insole.BLEInsoleSyncTimeCommandResult;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "Insole" ;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION= 241;
     private ArrayList<BLEDeviceScanResult> Devices = new ArrayList<>();
-    Device device1;
-    Device device2;
-    Button scanneddevice1;
-    Button scanneddevice2;
-    TextView getBatteryD1;
-    TextView getBatteryD2;
+    private ArrayList<Device> _ConnectedDevices = new ArrayList<>();
+    public Device device1;
+    public Device device2;
+    TextView connectdevices;
 
 
     @Override
@@ -66,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         config.setDebugLog(true);
         AdvanproAndroidSDK.setConfig(config);
         // end of Initializing the sdk
+        connectdevices=findViewById(R.id.tv_connection_prompt);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
@@ -94,26 +100,13 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "stop scan");
                     device1 = Devices.get(0).create();
                     device2 = Devices.get(1).create();
-
-                        device1.on(DefaultBLEDevice.EVENT_BATTERY_CHANGE, new DeviceEventCallback() {
-                            @Override
-                            public void onData(Device device,DeviceEventResult data) {
-                                    Log.d(TAG,"Device 1 has "+device.getInfo(DefaultBLEDevice.BLE_DEVICE_INFO_BATTERY).toString()+"% charge");
-                                    //getBatteryD1=findViewById(R.id.tv_charge_device1);
-                                //getBatteryD2.setText(device.getInfo(DefaultBLEDevice.BLE_DEVICE_INFO_BATTERY).toString());
-                            }
-                        });
-
-                        device2.on(DefaultBLEDevice.EVENT_BATTERY_CHANGE, new DeviceEventCallback() {
-                            @Override
-                            public void onData(Device device,DeviceEventResult data) {
-                                    //getBatteryD2=findViewById(R.id.tv_charge_device2);
-                                    Log.d(TAG,"Device 2 has "+device.getInfo(DefaultBLEDevice.BLE_DEVICE_INFO_BATTERY).toString()+"% charge");
-                                    //getBatteryD2.setText(device.getInfo(DefaultBLEDevice.BLE_DEVICE_INFO_BATTERY).toString());
-                            }
-                        });
-
-                    connectToDevices();
+//
+                    connectdevices.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            connectToDevices();
+                        }
+                    });
                 }
                 @Override
                 public void onError(DeviceCallbackException error) {
@@ -128,20 +121,56 @@ public class MainActivity extends AppCompatActivity {
             onStop();
         }
 
-        scanneddevice1 = (Button) findViewById(R.id.btn_device1_connect);
-        scanneddevice2 = (Button) findViewById(R.id.btn_device2_connect);
+
     }
 
     private void connectToDevices() {
-                scanneddevice1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
+        final Intent intent = (new Intent(getApplicationContext(),ConnectedDeviceActivity.class));
+        final Bundle bundle = new Bundle();
+
                         if(device1.isConnected()==false)
                         {
                             device1.connect(new DeviceConnectCallback() {
                                 @Override
                                 public void onSucceed(Device device1, DeviceConnectResult result) {
-                                    scanneddevice1.setText("Connected");
+                                    Log.d(TAG,"The connection is successful");
+                                    _ConnectedDevices.add(device1);
+//                                    bundle.putParcelable("Devices", (Parcelable) _ConnectedDevices);
+//                                    intent.putExtras(bundle);
+//                                    DeviceCommandCallback<BLEInsoleHistoryStepCommandResult> callback = new DeviceCommandCallback<BLEInsoleHistoryStepCommandResult>() {
+//                                        @Override
+//                                        public void onSuccess(Device device,BLEInsoleHistoryStepCommandResult
+//                                                result) {
+//                                            Log.d(TAG, String.format("Steps for historical success. Steps go on %d %d: %d, running count: %d, walking time: %d, running time: % d", result.getMonth(), result.getDay(),
+//                                                    result.getWalkStep(), result.getRunStep(), result.getWalkDuration(), result.getRunDuration()));
+//// Read the success
+////Note: callback has in the main thread, can directly update the UI
+//                                        }
+//                                        @Override
+//                                        public void onError(Device device,DeviceCallbackException error) {
+//// Read failure
+//                                            error.printStackTrace();
+////Note: callback has in the main thread, can directly update the UI
+//                                        }
+//                                    };
+//                                    BLEInsoleHistoryStepCommandParams params = new BLEInsoleHistoryStepCommandParams(new Date(2018,6,24));
+//                                    device1.command(BLEInsoleDevice.CMD_INSOLE_HISTORY_STEP, params, 30, callback);
+
+                                    MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult> callback = new MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult>() {
+                                        @Override
+                                        public void onMainThreadData(Device device,BLEInsoleRealStepEventResult data)
+                                        {
+//Note: callback has in the main thread, can directly update the UI
+                                            Log.d("InsoleD","stepcount Device1"+ data.getWalkStep());
+                                        }
+                                    };
+                                    device1.on(BLEInsoleDevice.EVENT_INSOLE_REAL_STEP, callback);
+//Cancel to monitor
+                                    //device.un(BLEInsoleDevice.EVENT_INSOLE_REAL_STEP, callback);
+                                    if(device2.isConnected()){
+                                        //startActivity(intent);
+                                        connectdevices.setText("Connected");
+                                    }
                                 }
 
                                 @Override
@@ -153,18 +182,41 @@ public class MainActivity extends AppCompatActivity {
                         else if(device1.isConnected()){
                             Log.d(TAG,"device1 is already connected");
                         }
-                    }
-                });
 
-                scanneddevice2.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
                         if(device2.isConnected()==false)
                         {
                             device2.connect(new DeviceConnectCallback() {
                             @Override
                             public void onSucceed(Device device2, DeviceConnectResult result) {
-                                scanneddevice2.setText("Connected");
+                                Log.d(TAG,"The connection is successful");
+                                _ConnectedDevices.add(device2);
+//                                bundle.putParcelable("Devices", (Parcelable) _ConnectedDevices);
+//                                intent.putExtras(bundle);
+
+//Send time synchronization commands
+ DeviceCommandCallback<BLEInsoleHistoryStepCommandResult> callback = new DeviceCommandCallback<BLEInsoleHistoryStepCommandResult>() {
+                                    @Override
+                                    public void onSuccess(Device device,BLEInsoleHistoryStepCommandResult
+                                            result) {
+                                        Log.d(TAG, String.format("Steps for historical success. Steps on %s is %d, running count: %d, walking time: %d, running time: % d", result.getDate(),
+                                                result.getWalkStep(), result.getRunStep(), result.getWalkDuration(), result.getRunDuration()));
+// Read the success
+//Note: callback has in the main thread, can directly update the UI
+                                    }
+                                    @Override
+                                    public void onError(Device device,DeviceCallbackException error) {
+// Read failure
+                                        error.printStackTrace();
+//Note: callback has in the main thread, can directly update the UI
+                                    }
+                                };
+                                BLEInsoleHistoryStepCommandParams params = new BLEInsoleHistoryStepCommandParams(new Date(2018,6,24));
+                                device2.command(BLEInsoleDevice.CMD_INSOLE_HISTORY_STEP, params, 30, callback);
+
+                                if(device1.isConnected()){
+                                    //startActivity(intent);
+                                    connectdevices.setText("Connected");
+                                }
                             }
 
                             @Override
@@ -176,18 +228,14 @@ public class MainActivity extends AppCompatActivity {
                         }
                         else if(device2.isConnected()){
                             Log.d(TAG,"device2 is already connected");
-
-                        device2.on(DefaultBLEDevice.EVENT_BATTERY_CHANGE, new DeviceEventCallback() {
-                            @Override
-                            public void onData(Device device,DeviceEventResult data) {
-                                Log.d(TAG, "Electricity changes： "+device.getInfo(DefaultBLEDevice.BLE_DEVICE_INFO_BATTERY));
-                                //Note: update the UI need to switch to the main thread
-                            }
-                        });}
-                    }
-                });
-
-
+//                        device2.on(DefaultBLEDevice.EVENT_BATTERY_CHANGE, new DeviceEventCallback() {
+//                            @Override
+//                            public void onData(Device device,DeviceEventResult data) {
+//                                Log.d(TAG, "Electricity changes： "+device.getInfo(DefaultBLEDevice.BLE_DEVICE_INFO_BATTERY));
+//                                //Note: update the UI need to switch to the main thread
+//                            }
+//                        });
+                        }
     }
 
     private void writeToDB() {
