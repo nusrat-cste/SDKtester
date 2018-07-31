@@ -44,6 +44,7 @@ import hk.advanpro.android.sdk.device.result.DeviceConnectResult;
 import hk.advanpro.android.sdk.device.result.DeviceEventResult;
 import hk.advanpro.android.sdk.device.result.ble.BLEDeviceScanResult;
 import hk.advanpro.android.sdk.device.result.ble.insole.BLEInsoleHistoryStepCommandResult;
+import hk.advanpro.android.sdk.device.result.ble.insole.BLEInsoleRealGaitEventResult;
 import hk.advanpro.android.sdk.device.result.ble.insole.BLEInsoleRealStepEventResult;
 import hk.advanpro.android.sdk.device.result.ble.insole.BLEInsoleSyncTimeCommandResult;
 
@@ -132,39 +133,40 @@ public class MainActivity extends AppCompatActivity {
                         {
                             device1.connect(new DeviceConnectCallback() {
                                 @Override
-                                public void onSucceed(Device device1, DeviceConnectResult result) {
+                                public void onSucceed(Device device, DeviceConnectResult result) {
                                     Log.d(TAG,"The connection is successful");
                                     _ConnectedDevices.add(device1);
-//                                    bundle.putParcelable("Devices", (Parcelable) _ConnectedDevices);
-//                                    intent.putExtras(bundle);
-//                                    DeviceCommandCallback<BLEInsoleHistoryStepCommandResult> callback = new DeviceCommandCallback<BLEInsoleHistoryStepCommandResult>() {
-//                                        @Override
-//                                        public void onSuccess(Device device,BLEInsoleHistoryStepCommandResult
-//                                                result) {
-//                                            Log.d(TAG, String.format("Steps for historical success. Steps go on %d %d: %d, running count: %d, walking time: %d, running time: % d", result.getMonth(), result.getDay(),
-//                                                    result.getWalkStep(), result.getRunStep(), result.getWalkDuration(), result.getRunDuration()));
-//// Read the success
-////Note: callback has in the main thread, can directly update the UI
-//                                        }
-//                                        @Override
-//                                        public void onError(Device device,DeviceCallbackException error) {
-//// Read failure
-//                                            error.printStackTrace();
-////Note: callback has in the main thread, can directly update the UI
-//                                        }
-//                                    };
-//                                    BLEInsoleHistoryStepCommandParams params = new BLEInsoleHistoryStepCommandParams(new Date(2018,6,24));
-//                                    device1.command(BLEInsoleDevice.CMD_INSOLE_HISTORY_STEP, params, 30, callback);
 
                                     MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult> callback = new MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult>() {
                                         @Override
                                         public void onMainThreadData(Device device,BLEInsoleRealStepEventResult data)
                                         {
-//Note: callback has in the main thread, can directly update the UI
                                             Log.d("InsoleD","stepcount Device1"+ data.getWalkStep());
                                         }
                                     };
                                     device1.on(BLEInsoleDevice.EVENT_INSOLE_REAL_STEP, callback);
+
+                                    //gets the data from the device like step counts...
+                                    MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult> cb = new MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult>() {
+                                        @Override
+                                        public void onMainThreadData(Device device,BLEInsoleRealStepEventResult data)
+                                        {
+// Notice: The callback has in the main thread
+                                            Log.d(TAG,"step "+data.getWalkStep()+" gait "+data.getGait()+" isrun "+data.getIsRun());
+// Do something...
+                                        }
+                                    };
+                                    device1.on(BLEInsoleDevice.EVENT_INSOLE_REAL_STEP, cb);
+
+                                    MainThreadDeviceEventCallback<BLEInsoleRealGaitEventResult> cb2 = new MainThreadDeviceEventCallback<BLEInsoleRealGaitEventResult>() {
+                                        @Override
+                                        public void onMainThreadData(Device device,BLEInsoleRealGaitEventResult data)
+                                        {
+                                            Log.d(TAG,"step A "+data.getTouchA()+" B "+data.getTouchB()+" C "+data.getTouchC()+" D "+data.getTouchD());
+                                            Log.d(TAG,"step "+data.getVarus()+" forefoot "+data.getForefoot()+" sole "+data.getSole());
+                                        }
+                                    };
+                                    device1.on(BLEInsoleDevice.EVENT_INSOLE_REAL_GAIT, cb2);
 //Cancel to monitor
                                     //device.un(BLEInsoleDevice.EVENT_INSOLE_REAL_STEP, callback);
                                     if(device2.isConnected()){
@@ -190,28 +192,36 @@ public class MainActivity extends AppCompatActivity {
                             public void onSucceed(Device device2, DeviceConnectResult result) {
                                 Log.d(TAG,"The connection is successful");
                                 _ConnectedDevices.add(device2);
-//                                bundle.putParcelable("Devices", (Parcelable) _ConnectedDevices);
-//                                intent.putExtras(bundle);
 
-//Send time synchronization commands
- DeviceCommandCallback<BLEInsoleHistoryStepCommandResult> callback = new DeviceCommandCallback<BLEInsoleHistoryStepCommandResult>() {
+                                MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult> callback = new MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult>() {
                                     @Override
-                                    public void onSuccess(Device device,BLEInsoleHistoryStepCommandResult
-                                            result) {
-                                        Log.d(TAG, String.format("Steps for historical success. Steps on %s is %d, running count: %d, walking time: %d, running time: % d", result.getDate(),
-                                                result.getWalkStep(), result.getRunStep(), result.getWalkDuration(), result.getRunDuration()));
-// Read the success
-//Note: callback has in the main thread, can directly update the UI
-                                    }
-                                    @Override
-                                    public void onError(Device device,DeviceCallbackException error) {
-// Read failure
-                                        error.printStackTrace();
-//Note: callback has in the main thread, can directly update the UI
+                                    public void onMainThreadData(Device device,BLEInsoleRealStepEventResult data)
+                                    {
+                                        Log.d("InsoleD","stepcount Device1"+ data.getWalkStep());
                                     }
                                 };
-                                BLEInsoleHistoryStepCommandParams params = new BLEInsoleHistoryStepCommandParams(new Date(2018,6,24));
-                                device2.command(BLEInsoleDevice.CMD_INSOLE_HISTORY_STEP, params, 30, callback);
+                                device2.on(BLEInsoleDevice.EVENT_INSOLE_REAL_STEP, callback);
+//gets the data from the device like step counts...
+                                MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult> cb = new MainThreadDeviceEventCallback<BLEInsoleRealStepEventResult>() {
+                                    @Override
+                                    public void onMainThreadData(Device device,BLEInsoleRealStepEventResult data)
+                                    {
+// Notice: The callback has in the main thread
+                                        Log.d(TAG,"step "+data.getWalkStep()+" gait "+data.getGait()+" isrun "+data.getIsRun());
+// Do something...
+                                    }
+                                };
+                                device2.on(BLEInsoleDevice.EVENT_INSOLE_REAL_STEP, cb);
+
+                                MainThreadDeviceEventCallback<BLEInsoleRealGaitEventResult> cb2 = new MainThreadDeviceEventCallback<BLEInsoleRealGaitEventResult>() {
+                                    @Override
+                                    public void onMainThreadData(Device device,BLEInsoleRealGaitEventResult data)
+                                    {
+                                        Log.d(TAG,"step A "+data.getTouchA()+" B "+data.getTouchB()+" C "+data.getTouchC()+" D "+data.getTouchD());
+                                        Log.d(TAG,"step "+data.getVarus()+" forefoot "+data.getForefoot()+" sole "+data.getSole());
+                                    }
+                                };
+                                device2.on(BLEInsoleDevice.EVENT_INSOLE_REAL_GAIT, cb2);
 
                                 if(device1.isConnected()){
                                     //startActivity(intent);
